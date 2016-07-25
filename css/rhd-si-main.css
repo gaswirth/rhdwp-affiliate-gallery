@@ -1,0 +1,31 @@
+/**
+ * Basic stylesheet for the RHD Social Icons plugin by Roundhouse Designs
+ **/
+
+.rhd-social-icons-entries input {
+	width: 245px;
+	float: right;
+}
+
+.rhd-social-icons {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.rhd-social-icons .rhd-social-icon {
+	width: 64px;
+	height: 64px;
+	display: inline-block;
+	background-size: 100%;
+	position: relative;
+}
+
+.rhd-social-icons a {
+	width: 100%;
+	height: 100%;
+}
+
+.rhd-social-icons a path {
+	transition: all 0.25s;
+}
