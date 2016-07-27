@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: RHD Affiliate Gallery
- * Version: 0.1-alpha
+ * Version: 0.2-beta
  * Description: Displays affiliate links in a pretty custom gallery.
  * Author: Roundhouse Designs
  * Author URI: https://roundhouse-designs.com
@@ -17,7 +17,7 @@
 define( 'RHD_AG_PLUGIN_DIR', plugin_dir_url(__FILE__) );
 
 require( 'includes/rhd-ag-functions.php' );
-// require( 'includes/rhd-ag-shortcode.php' );
+require( 'includes/rhd-ag-shortcode.php' );
 
 
 

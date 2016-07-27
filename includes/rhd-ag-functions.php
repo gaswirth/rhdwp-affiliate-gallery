@@ -272,9 +272,10 @@ function rhd_get_image_sizes() {
  * @param mixed $gallery_id
  * @param int $cols (default: 2)
  * @param string $thumbsize (default: 'thumbnail')
+ * @param bool $echo (default: true)
  * @return void
  */
-function rhd_affiliate_gallery( $post_id, $cols = 2, $thumbsize = 'thumbnail' ) {
+function rhd_affiliate_gallery( $post_id, $cols = 2, $thumbsize = 'thumbnail', $echo = true ) {
 	$images = get_post_meta( $post_id, 'rhd-ag-images', true );
 
 	if ( $images ) {
@@ -295,5 +296,8 @@ function rhd_affiliate_gallery( $post_id, $cols = 2, $thumbsize = 'thumbnail' ) 
 		$output .= "</div>\n";
 	}
 
-	echo $output;
+	if ( $echo == true )
+		echo $output;
+
+	else return $output;
 }
