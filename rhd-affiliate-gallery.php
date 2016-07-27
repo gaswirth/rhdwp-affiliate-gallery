@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: RHD Affiliate Gallery
- * Version: 0.2-beta
+ * Version: 0.3
  * Description: Displays affiliate links in a pretty custom gallery.
  * Author: Roundhouse Designs
  * Author URI: https://roundhouse-designs.com
@@ -20,7 +20,6 @@ require( 'includes/rhd-ag-functions.php' );
 require( 'includes/rhd-ag-shortcode.php' );
 
 
-
 class RHD_Affiliate_Gallery extends WP_Widget {
 	function __construct() {
 		parent::__construct(
@@ -34,6 +33,11 @@ class RHD_Affiliate_Gallery extends WP_Widget {
 
 	public function display_styles() {
 		wp_enqueue_style( 'rhd-ag-main', RHD_AG_PLUGIN_DIR . 'css/rhd-ag-main.css' );
+	}
+
+	public function rhd_ag_flush_rewrites() {
+		rhd_affiliate_gallery_init();
+		flush_rewrite_rules();
 	}
 
 	public function update( $new_instance, $old_instance ) {
@@ -65,7 +69,7 @@ class RHD_Affiliate_Gallery extends WP_Widget {
 		?>
 
 		<?php if ( ! $gallery_id ) : ?>
-			<p>Please select an affiliate gallery to display.</p>
+			<p>No affiliate gallery selected.</p>
 		<?php else : ?>
 			<?php rhd_affiliate_gallery( $gallery_id, $cols, $thumbsize ); ?>
 		<?php endif;
@@ -139,3 +143,7 @@ function register_rhd_affiliate_gallery_widget()
     register_widget( 'RHD_Affiliate_Gallery' );
 }
 add_action( 'widgets_init', 'register_rhd_affiliate_gallery_widget' );
+
+
+register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
+register_activation_hook( __FILE__, array( 'RHD_Affiliate_Gallery', 'rhd_ag_flush_rewrites' ) );

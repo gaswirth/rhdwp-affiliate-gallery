@@ -33,14 +33,13 @@ function rhd_affiliate_gallery_init() {
 		'show_in_nav_menus' => false,
 		'supports'          => array( 'title' ),
 		'has_archive'       => false,
-		'rewrite'           => true,
+		'rewrite'           => array( 'slug' => 'rec' ),
 		'query_var'         => true,
 		'menu_icon'         => 'dashicons-products',
 		'show_in_rest'      => true,
 		'rest_base'         => 'affiliate_gallery',
 		'rest_controller_class' => 'WP_REST_Posts_Controller',
 		'exclude_from_search'	=> true,
-		'publicly_queryable'	=> false,
 		'register_meta_box_cb'	=> 'rhd_ag_meta_box'
 	) );
 }
@@ -137,7 +136,7 @@ function rhd_ag_image_meta_callback( $post ) {
 	<div id="rhd-ag-select-images">
 		<table>
 			<tbody class="sortable">
-				<?php for ( $i = 0; $i < $count; ++$i ) : ?>
+				<?php for ( $i = 0; $i < $count; $i++ ) : ?>
 					<tr class="rhd-ag-image-select" data-index="<?php echo $i; ?>">
 						<td class="rhd-ag-row-id">
 							<p><?php echo $i + 1; ?></p>
@@ -196,7 +195,7 @@ function rhd_ag_image_meta_save( $post_id ) {
 
 	if ( $count > 0 ) {
 		$image_data = array();
-		for ( $i = 0; $i < $count; ++$i ) {
+		for ( $i = 0; $i < $count; $i++ ) {
 			$image_data[$i]['id'] = absint( $_POST["rhd-ag-id-$i"] );
 			$image_data[$i]['link'] = esc_url_raw( $_POST["rhd-ag-link-$i"] );
 			$image_data[$i]['caption'] = esc_attr( $_POST["rhd-ag-caption-$i"] );
@@ -222,7 +221,7 @@ function rhd_ag_media_enqueue() {
 		wp_enqueue_media();
 
 		// Registers and enqueues the required javascript.
-		wp_register_script( 'meta-box-image', RHD_AG_PLUGIN_DIR . '/includes/media.js', array( 'jquery' ) );
+		wp_register_script( 'meta-box-image', RHD_AG_PLUGIN_DIR . '/js/rhd-ag-media.js', array( 'jquery' ) );
 		wp_localize_script( 'meta-box-image', 'meta_image',
 			array(
 				'title' => __( 'Choose or Upload an Image', 'rhd' ),
@@ -266,6 +265,22 @@ function rhd_get_image_sizes() {
 
 
 /**
+ * rhd_get_ag_template function.
+ *
+ * @access public
+ * @param mixed $single_template
+ * @return void
+ */
+function rhd_ag_template( $template ) {
+	if ( get_post_type() == 'affiliate_gallery' ) {
+		$template = dirname( __FILE__ ) . '/rhd-ag-template.php';
+	}
+	return $template;
+}
+add_filter( 'template_include', 'rhd_ag_template' );
+
+
+/**
  * rhd_affiliate_gallery function.
  *
  * @access public
@@ -280,17 +295,22 @@ function rhd_affiliate_gallery( $post_id, $cols = 2, $thumbsize = 'thumbnail', $
 
 	if ( $images ) {
 		$output = "<div class=\"rhd-affiliate-gallery gallery-columns-$cols gallery gallery-size-$thumbsize\">\n";
+		$i = 1;
 
 		foreach ( $images as $image ) {
+			$link = get_the_permalink( $post_id ) . "?id=affiliate-{$i}";
+
 			$output .= "<figure class=\"gallery-item\">\n";
 			$output .= "<div class=\"gallery-icon\">\n";
-			$output .= "<a href=\"{$image['link']}\" target=\"_blank\">" . wp_get_attachment_image( $image['id'], $thumbsize ) . "</a>\n";
+			$output .= "<a href=\"{$link}\" rel=\"nofollow\" target=\"_blank\">" . wp_get_attachment_image( $image['id'], $thumbsize ) . "</a>\n";
 			$output .= "</div>";
 
 			if ( $image['caption'] )
 				$output .= "<figcaption class=\"wp-caption-text gallery-caption\">{$image['caption']}</figcaption>\n";
 
 			$output .= "</figure>";
+
+			$i++;
 		}
 
 		$output .= "</div>\n";
