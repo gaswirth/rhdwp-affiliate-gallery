@@ -96,20 +96,77 @@ function rhd_ag_image_meta_callback( $post ) {
 	wp_nonce_field( basename( __FILE__ ), 'rhd_ag_nonce' );
 	$rhd_stored_meta = get_post_meta( $post->ID );
 
-	$count = ( isset( $rhd_stored_meta['rhd-ag-image-count'][0] ) ) ? $rhd_stored_meta['rhd-ag-image-count'][0] : 1;
+	$images = maybe_unserialize( $rhd_stored_meta['rhd-ag-images'][0] );
+
+	$count = ( ! empty( $images ) ) ? count( $images ) : 1;
 	?>
 
-	<div id="rhd-select-images">
-		<?php for ( $i = 1; $i <= $count; ++$i ) : ?>
-			<p class="rhd-ag-image-select">
-				<label for="rhd-ag-image-<?php echo $i; ?>" class="rhd-row-title"><?php _e( 'Image: ', 'rhd' )?></label>
-				<input type="text" name="rhd-ag-image-<?php echo $i; ?>" id="rhd-ag-image-<?php echo $i; ?>" class="rhd-ag-image" value="<?php if ( isset ( $rhd_stored_meta['rhd-ag-image-' . $i] ) ) echo $rhd_stored_meta['rhd-ag-image-' . $i][0]; ?>" />
-				<input type="button" id="rhd-ag-image-button-<?php echo $i; ?>" name="rhd-ag-image-button-<?php echo $i; ?>" class="button rhd-ag-image-button" value="<?php _e( 'Choose or Upload an Image', 'rhd' )?>" data-image-id="<?php echo $i; ?>" />
+	<style>
+		#rhd-ag-select-images table td {
+			vertical-align: middle;
+		}
 
-				<label for="rhd-ag-link-<?php echo $i; ?>" class="rhd-row-title"><?php _e( 'Affiliate Link: ', 'rhd' )?></label>
-				<input type="url" name="rhd-ag-link-<?php echo $i; ?>" id="rhd-ag-link-<?php echo $i; ?>" class="rhd-ag-link" value="<?php if ( isset ( $rhd_stored_meta['rhd-ag-link-' . $i] ) ) echo $rhd_stored_meta['rhd-ag-link-' . $i][0]; ?>" />
-			</p>
-		<?php endfor; ?>
+		#rhd-ag-select-images .rhd-ag-row-id {
+			padding: 0 1em;
+		}
+
+		#rhd-ag-select-images .rhd-ag-thumb img {
+			width: 100px;
+			height: auto;
+			display: block;
+			margin-right: auto;
+			margin-left: auto;
+		}
+
+		.remove-ag-image {
+			text-decoration: none;
+		}
+
+		.sort-handle {
+			cursor: move;
+		}
+
+		.drag-line {
+			border-bottom: 2px solid red;
+			display: block;
+		}
+	</style>
+
+	<p>Drag and drop rows to re-order the gallery. Click the [-] button next to a row to permanently delete it.</p>
+
+	<div id="rhd-ag-select-images">
+		<table>
+			<tbody class="sortable">
+				<?php for ( $i = 0; $i < $count; ++$i ) : ?>
+					<tr class="rhd-ag-image-select" data-index="<?php echo $i; ?>">
+						<td class="rhd-ag-row-id">
+							<p><?php echo $i + 1; ?></p>
+						</td>
+						<td>
+							<div id="rhd-ag-thumb-<?php echo $i; ?>" class="rhd-ag-thumb">
+								<?php $thumb_src = wp_get_attachment_image_src( $images[$i]['id'], 'thumbnail' ); ?>
+								<?php if ( $thumb_src ) : ?>
+									<img src="<?php echo $thumb_src[0]; ?>" alt="thumbnail" />
+								<?php endif; ?>
+							</div>
+							<input type="button" id="rhd-ag-image-button-<?php echo $i; ?>" name="rhd-ag-image-button-<?php echo $i; ?>" class="button rhd-ag-image-button" value="<?php _e( 'Choose or Upload an Image', 'rhd' )?>" />
+							<input type="hidden" name="rhd-ag-id-<?php echo $i; ?>" id="rhd-ag-id-<?php echo $i; ?>" class="rhd-ag-id" value="<?php if ( isset ( $images[$i]['id'] ) ) echo $images[$i]['id']; ?>" />
+						</td>
+						<td>
+							<label for="rhd-ag-link-<?php echo $i; ?>" class="rhd-row-title"><?php _e( 'Affiliate Link: ', 'rhd' )?></label>
+							<input type="url" name="rhd-ag-link-<?php echo $i; ?>" id="rhd-ag-link-<?php echo $i; ?>" class="rhd-ag-link" value="<?php if ( isset ( $images[$i]['link'] ) ) echo $images[$i]['link']; ?>" />
+						</td>
+						<td>
+							<label for="rhd-ag-caption-<?php echo $i; ?>" class="rhd-row-caption"><?php _e( 'Caption: ', 'rhd' )?></label>
+							<input type="text" name="rhd-ag-caption-<?php echo $i; ?>" id="rhd-ag-caption-<?php echo $i; ?>" class="rhd-ag-caption" value="<?php if ( isset ( $images[$i]['caption'] ) ) echo $images[$i]['caption']; ?>" />
+						</td>
+						<td>
+							<a class="remove-ag-image" href="#">[&ndash;]</a>
+						</td>
+					</tr>
+				<?php endfor; ?>
+			</tbody>
+		</table>
 
 		<a class="add-ag-image" href="#">&plus; Add Another Row</a>
 
@@ -138,31 +195,22 @@ function rhd_ag_image_meta_save( $post_id ) {
 	$count = ( isset( $_POST[ 'rhd-ag-image-count' ] ) ) ? $_POST[ 'rhd-ag-image-count' ] : 0;
 
 	if ( $count > 0 ) {
-		for ( $i = 1; $i <= $count; ++$i ) {
-			rhd_update_post_meta( $post_id, 'rhd-ag-image-', $i );
-			rhd_update_post_meta( $post_id, 'rhd-ag-link-', $i );
+		$image_data = array();
+		for ( $i = 0; $i < $count; ++$i ) {
+			$image_data[$i]['id'] = absint( $_POST["rhd-ag-id-$i"] );
+			$image_data[$i]['link'] = esc_url_raw( $_POST["rhd-ag-link-$i"] );
+			$image_data[$i]['caption'] = esc_attr( $_POST["rhd-ag-caption-$i"] );
 		}
 
-		update_post_meta( $post_id, 'rhd-ag-image-count', absint( $count ) );
+		if ( $image_data[$i]['id'] == 0 ) {
+			unset($image_data[$i]);
+		}
+
+		update_post_meta( $post_id, 'rhd-ag-images', $image_data );
 	}
 
 }
 add_action( 'save_post', 'rhd_ag_image_meta_save' );
-
-
-/**
- * rhd_update_post_meta function.
- *
- * @access public
- * @param mixed $prefix
- * @param mixed $i
- * @return void
- */
-function rhd_update_post_meta( $post_id, $prefix, $i ) {
-	if( isset( $_POST[ $prefix . $i ] ) && $_POST[ $prefix . $i ] !== '' ) {
-		update_post_meta( $post_id, $prefix . $i, esc_url_raw( $_POST[ $prefix . $i ] ) );
-	}
-}
 
 
 /**
@@ -214,4 +262,38 @@ function rhd_get_image_sizes() {
 	}
 
 	return $sizes;
+}
+
+
+/**
+ * rhd_affiliate_gallery function.
+ *
+ * @access public
+ * @param mixed $gallery_id
+ * @param int $cols (default: 2)
+ * @param string $thumbsize (default: 'thumbnail')
+ * @return void
+ */
+function rhd_affiliate_gallery( $post_id, $cols = 2, $thumbsize = 'thumbnail' ) {
+	$images = get_post_meta( $post_id, 'rhd-ag-images', true );
+
+	if ( $images ) {
+		$output = "<div class=\"rhd-affiliate-gallery gallery-columns-$cols gallery gallery-size-$thumbsize\">\n";
+
+		foreach ( $images as $image ) {
+			$output .= "<figure class=\"gallery-item\">\n";
+			$output .= "<div class=\"gallery-icon\">\n";
+			$output .= "<a href=\"{$image['link']}\" target=\"_blank\">" . wp_get_attachment_image( $image['id'], $thumbsize ) . "</a>\n";
+			$output .= "</div>";
+
+			if ( $image['caption'] )
+				$output .= "<figcaption class=\"wp-caption-text gallery-caption\">{$image['caption']}</figcaption>\n";
+
+			$output .= "</figure>";
+		}
+
+		$output .= "</div>\n";
+	}
+
+	echo $output;
 }

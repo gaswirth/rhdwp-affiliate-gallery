@@ -12,7 +12,7 @@ jQuery(document).ready(function($){
 		e.preventDefault();
 
 		// Sets image #
-		var image_id = $(this).data("image-id");
+		var image_id = parseInt( $(this).parents(".rhd-ag-image-select").data("index") );
 
 		// Sets up the media library frame
 		meta_image_frame = wp.media.frames.meta_image_frame = wp.media({
@@ -28,7 +28,9 @@ jQuery(document).ready(function($){
 			var media_attachment = meta_image_frame.state().get("selection").first().toJSON();
 
 			// Sends the attachment URL to our custom image input field.
-			$("#rhd-ag-image-" + image_id).val(media_attachment.url);
+			$("#rhd-ag-thumb-" + image_id + " img").remove();
+			$("#rhd-ag-thumb-" + image_id).append('<img src="' + media_attachment.sizes.thumbnail.url + '" />');
+			$("#rhd-ag-id-" + image_id).val(media_attachment.id);
 		});
 
 		// Opens the media library frame.
@@ -38,35 +40,79 @@ jQuery(document).ready(function($){
 
 	$(".add-ag-image").on("click", function(){
 		var count = $(".rhd-ag-image-select").length;
-			var field = $(this).siblings(".rhd-ag-image-select:last-of-type").clone(true);
+		var field = $("#rhd-ag-select-images table .rhd-ag-image-select:last-of-type").clone(true);
 		var fieldLocation = $(".rhd-ag-image-select:last-of-type");
 
-		$(field).find(".rhd-ag-image, .rhd-ag-link, .rhd-ag-image-button").each(function(){
+		$(field).find(".rhd-ag-thumb img").remove();
+		$(field).find("input").each(function(){
 			if ( ! $(this).is(":button") ) {
 				$(this).val("");
 			}
-
-			$(this).attr({
-				"name" : $(this).attr("name").replace(/(\d+)/, function(x) {
-					return parseInt(x) + 1;
-				}),
-				"id" : $(this).attr("id").replace(/(\d+)/, function(x) {
-					return parseInt(x) + 1;
-				})
-			});
 		});
-
-		$(field).find("label").each(function(){
-			$(this).attr("for", $(this).attr("for").replace(/(\d+)/, function(x) {
-				return parseInt(x) + 1;
-			}));
-		});
-
-		$("#rhd-ag-image-count").val(count + 1);
-		$(field).find(".rhd-ag-image-button").data("image-id", count + 1);
 
 		field.insertAfter(fieldLocation);
 
+		updateGalleryIndices();
+
+		$("#rhd-ag-image-count").val(count + 1);
+
 		return false;
 	});
+
+	$(".remove-ag-image").on("click", function(){
+		$(this).parents(".rhd-ag-image-select").fadeOut('fast', function(){
+			var count = $("#rhd-ag-image-count").val();
+			$("#rhd-ag-image-count").val(count - 1);
+
+			$(this).find(".rhd-ag-link").val("");
+			$(this).find(".rhd-ag-id").val("");
+			$(this).find(".rhd-ag-caption").val("");
+
+			$(this).remove();
+			updateGalleryIndices();
+		});
+	});
+
+	$(".sortable").sortable({
+		opacity: 0.6,
+		cursor: 'move',
+		revert: true,
+		placeholder: "drag-line",
+		update: updateGalleryIndices
+	});
+
+
+	function updateGalleryIndices() {
+		$(".rhd-ag-image-select").each(function(i){
+			var $this = $(this);
+			var newID = i;
+
+			$this.data("index", newID);
+			$this.attr("data-index", newID);
+			$this.find(".rhd-ag-row-id p").text(newID + 1);
+			$this.find(".rhd-ag-image-button").data("image-id", newID);
+
+			$this.find("[class*=rhd-ag-]").each(function(){
+				var attrID = $(this).attr('id');
+				var attrClass = $(this).attr('class');
+				var attrName = $(this).attr('name');
+
+				if (typeof attrID !== typeof undefined && attrID !== false)
+					$(this).attr("id", $(this).attr("id").replace(/(\d+)/, newID));
+
+				if (typeof attrName !== typeof undefined && attrName !== false)
+					$(this).attr("name", $(this).attr("name").replace(/(\d+)/, newID));
+
+				if (typeof attrClass !== typeof undefined && attrClass !== false)
+					$(this).attr("class", $(this).attr("class").replace(/(\d+)/, newID));
+			});
+
+			$this.find("label").each(function(){
+				$(this).attr("for", $(this).attr("for").replace(/(\d+)/, newID));
+			});
+
+			$this.find(".rhd-ag-image-button").data("image-id", newID);
+		});
+	}
+
 });
