@@ -26,10 +26,12 @@ jQuery(document).ready(function($){
 
 			// Grabs the attachment selection and creates a JSON representation of the model.
 			var media_attachment = meta_image_frame.state().get("selection").first().toJSON();
+			
+			console.log(media_attachment);
 
 			// Sends the attachment URL to our custom image input field.
 			$("#rhd-ag-thumb-" + image_id + " img").remove();
-			$("#rhd-ag-thumb-" + image_id).append('<img src="' + media_attachment.sizes.thumbnail.url + '" />');
+			$("#rhd-ag-thumb-" + image_id).append('<img src="' + media_attachment.sizes.full.url + '" />');
 			$("#rhd-ag-id-" + image_id).val(media_attachment.id);
 		});
 

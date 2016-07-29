@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: RHD Affiliate Gallery
- * Version: 0.3
+ * Version: 0.31
  * Description: Displays affiliate links in a pretty custom gallery.
  * Author: Roundhouse Designs
  * Author URI: https://roundhouse-designs.com
